@@ -4,6 +4,7 @@ gradle-wrapper.jar
 /gradlew
 /gradlew.bat
 /local.properties
+lib/firebase_options.dart
 GeneratedPluginRegistrant.java
 .cxx/
 
