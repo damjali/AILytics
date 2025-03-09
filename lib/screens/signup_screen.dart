@@ -3,6 +3,7 @@ import 'package:ailytics/services/auth_service.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ailytics/widgets/custom_radio.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -17,6 +18,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _dobController = TextEditingController();
   DateTime? _selectedDate;
   String _selectedGender = 'Female';
   bool _isLoading = false;
@@ -27,6 +29,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _dobController.dispose();
     super.dispose();
   }
 
@@ -69,221 +72,510 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.black,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
-    if (pickedDate != null && pickedDate != _selectedDate) {
+
+    if (picked != null) {
       setState(() {
-        _selectedDate = pickedDate;
+        _selectedDate = picked;
+        _dobController.text = "${picked.day}/${picked.month}/${picked.year}";
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Get screen width to determine if we're on a mobile device
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth <= 640;
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Sign Up'),
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Form(
-            key: _formKey,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 20,
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: isMobile
+                  ? CrossAxisAlignment.center
+                  : CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Let's get started.",
+                // Welcome Text
+                Text(
+                  'Let\'s get started.',
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                    fontFamily: 'Poppins',
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  "Please fill your details.",
+                const SizedBox(height: 8),
+
+                // Details Text
+                Text(
+                  'Please fill your details.',
                   style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
+                    fontSize: isMobile ? 17 : 16,
+                    color: const Color(0xFF6B7280),
+                    fontFamily: 'Poppins',
                   ),
                 ),
                 const SizedBox(height: 32),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter your full name',
-                    labelText: 'Full Name',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter your email',
-                    labelText: 'Email',
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!EmailValidator.validate(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Gender',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: 'Male',
-                          groupValue: _selectedGender,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedGender = value!;
-                            });
-                          },
-                        ),
-                        const Text('Male'),
-                        const SizedBox(width: 20),
-                        Radio<String>(
-                          value: 'Female',
-                          groupValue: _selectedGender,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedGender = value!;
-                            });
-                          },
-                        ),
-                        const Text('Female'),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Date of Birth',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () => _selectDate(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _selectedDate == null
-                                  ? 'Select DOB'
-                                  : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-                              style: TextStyle(
-                                color: _selectedDate == null
-                                    ? Colors.grey[500]
-                                    : Colors.black,
+
+                // Signup Form
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: isMobile
+                        ? CrossAxisAlignment.center
+                        : CrossAxisAlignment.start,
+                    children: [
+                      // Full Name Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Full Name',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: InputDecoration(
+                              hintText: 'Enter your full name',
+                              hintStyle: TextStyle(
+                                fontSize: isMobile ? 14 : 16,
+                                fontFamily: 'Poppins',
+                                color: Colors.grey,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF3F4F6),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
                               ),
                             ),
-                            const Icon(Icons.calendar_today, size: 20),
-                          ],
+                            style: TextStyle(
+                              fontSize: isMobile ? 14 : 16,
+                              fontFamily: 'Poppins',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your name';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Email Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Email',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              hintText: 'Enter your email',
+                              hintStyle: TextStyle(
+                                fontSize: isMobile ? 14 : 16,
+                                fontFamily: 'Poppins',
+                                color: Colors.grey,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF3F4F6),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            style: TextStyle(
+                              fontSize: isMobile ? 14 : 16,
+                              fontFamily: 'Poppins',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your email';
+                              }
+                              if (!EmailValidator.validate(value)) {
+                                return 'Please enter a valid email';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Gender Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Gender',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              CustomRadio(
+                                value: 'Male',
+                                groupValue: _selectedGender,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedGender = value!;
+                                  });
+                                },
+                                label: 'Male',
+                                isMobile: isMobile,
+                              ),
+                              const SizedBox(width: 32),
+                              CustomRadio(
+                                value: 'Female',
+                                groupValue: _selectedGender,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedGender = value!;
+                                  });
+                                },
+                                label: 'Female',
+                                isMobile: isMobile,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Date of Birth Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Date of Birth',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: () => _selectDate(context),
+                            child: AbsorbPointer(
+                              child: TextFormField(
+                                controller: _dobController,
+                                decoration: InputDecoration(
+                                  hintText: 'Select DOB',
+                                  hintStyle: TextStyle(
+                                    fontSize: isMobile ? 14 : 16,
+                                    fontFamily: 'Poppins',
+                                    color: Colors.grey,
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF3F4F6),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE5E7EB),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE5E7EB),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  suffixIcon: const Icon(
+                                    Icons.calendar_today_outlined,
+                                    color: Color(0xFF999999),
+                                    size: 20,
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  fontSize: isMobile ? 14 : 16,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Password Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Password',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: 'Enter your password',
+                              hintStyle: TextStyle(
+                                fontSize: isMobile ? 14 : 16,
+                                fontFamily: 'Poppins',
+                                color: Colors.grey,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF3F4F6),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            style: TextStyle(
+                              fontSize: isMobile ? 14 : 16,
+                              fontFamily: 'Poppins',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your password';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Confirm Password Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Confirm Password',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _confirmPasswordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: 'Reenter your password',
+                              hintStyle: TextStyle(
+                                fontSize: isMobile ? 14 : 16,
+                                fontFamily: 'Poppins',
+                                color: Colors.grey,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF3F4F6),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            style: TextStyle(
+                              fontSize: isMobile ? 14 : 16,
+                              fontFamily: 'Poppins',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please confirm your password';
+                              }
+                              if (value != _passwordController.text) {
+                                return 'Passwords do not match';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Sign Up Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: isMobile ? 52 : 56,
+                        child: _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : ElevatedButton(
+                          onPressed: _submitForm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              fontSize: isMobile ? 14 : 16,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter your password',
-                    labelText: 'Password',
+                    ],
                   ),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  decoration: const InputDecoration(
-                    hintText: 'Reenter your password',
-                    labelText: 'Confirm Password',
-                  ),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
+
+                // Login Section
                 const SizedBox(height: 32),
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ElevatedButton(
-                  onPressed: _submitForm,
-                  child: const Text('Sign Up'),
-                ),
-                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Already have an account?'),
-                    TextButton(
-                      onPressed: () {
+                    Text(
+                      'Already have an account?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: const Color(0xFF6B7280),
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () {
                         Navigator.pop(context);
                       },
-                      child: const Text(
+                      child: Text(
                         'Log in',
-                        style: TextStyle(color: Colors.black),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                          fontFamily: 'Poppins',
+                        ),
                       ),
                     ),
                   ],
                 ),
+// Add padding at the bottom of the screen
+                const SizedBox(height: 40),
               ],
             ),
           ),
