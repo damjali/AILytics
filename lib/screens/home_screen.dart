@@ -55,7 +55,7 @@ class HomeScreen extends StatelessWidget {
           }
 
           final userData = snapshot.data!.data() as Map<String, dynamic>;
-          return Padding(
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,6 +166,8 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                // Add some bottom padding to ensure content isn't cut off
+                const SizedBox(height: 20),
               ],
             ),
           );

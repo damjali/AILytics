@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "195039407103",
+    "project_id": "ailytics-b5767",
+    "storage_bucket": "ailytics-b5767.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:195039407103:android:e3ea178af49f4d6dda55ca",
+        "android_client_info": {
+          "package_name": "com.example.ailytics"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABChFzppm8EqOa7jzL5_VTcfD8jQ0DuuY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
