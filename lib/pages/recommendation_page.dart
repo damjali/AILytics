@@ -8,10 +8,10 @@ class RecommendationPage extends StatelessWidget {
   final String? title;
 
   const RecommendationPage({
-    Key? key,
+    super.key,
     this.predictionType,
     this.title,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

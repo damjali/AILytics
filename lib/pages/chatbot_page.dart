@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 class ChatbotPage extends StatefulWidget {
-  const ChatbotPage({Key? key}) : super(key: key);
+  const ChatbotPage({super.key});
 
   @override
   State<ChatbotPage> createState() => _ChatbotPageState();
@@ -106,10 +106,10 @@ class ChatMessage extends StatelessWidget {
   final bool isUser;
 
   const ChatMessage({
-    Key? key,
+    super.key,
     required this.text,
     required this.isUser,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

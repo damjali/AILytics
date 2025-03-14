@@ -3,7 +3,7 @@ import 'package:ailytics/navigation/app_navigation.dart';
 import 'package:ailytics/pages/recommendation_page.dart';
 
 class PredictionPage extends StatelessWidget {
-  const PredictionPage({Key? key}) : super(key: key);
+  const PredictionPage({super.key});
 
   @override
   Widget build(BuildContext context) {

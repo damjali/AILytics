@@ -1,4 +1,3 @@
-import 'package:ailytics/screens/home_screen.dart';
 import 'package:ailytics/services/auth_service.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +6,7 @@ import 'package:ailytics/widgets/custom_radio.dart';
 import 'package:ailytics/pages/home_page.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({Key? key}) : super(key: key);
+  const SignupScreen({super.key});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -86,8 +85,7 @@ class _SignupScreenState extends State<SignupScreen> {
               onPrimary: Colors.white,
               surface: Colors.white,
               onSurface: Colors.black,
-            ),
-            dialogBackgroundColor: Colors.white,
+            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );

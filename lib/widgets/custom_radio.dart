@@ -9,13 +9,13 @@ class CustomRadio extends StatelessWidget {
   final bool isMobile;
 
   const CustomRadio({
-    Key? key,
+    super.key,
     required this.value,
     required this.groupValue,
     required this.onChanged,
     required this.label,
     this.isMobile = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

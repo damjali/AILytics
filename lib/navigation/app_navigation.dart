@@ -12,7 +12,7 @@ import 'package:ailytics/pages/recommendation_page.dart';
 final GlobalKey<AppNavigationState> navigationKey = GlobalKey<AppNavigationState>();
 
 class AppNavigation extends StatefulWidget {
-  const AppNavigation({Key? key}) : super(key: key);
+  const AppNavigation({super.key});
 
   @override
   State<AppNavigation> createState() => AppNavigationState();

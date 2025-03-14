@@ -1,5 +1,4 @@
 // lib/screens/splash_screen.dart
-import 'package:ailytics/screens/home_screen.dart';
 import 'package:ailytics/screens/landing_screen.dart';
 import 'package:ailytics/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:ailytics/pages/home_page.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();

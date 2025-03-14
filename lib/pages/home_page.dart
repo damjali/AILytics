@@ -6,7 +6,7 @@ import 'package:ailytics/pages/chatbot_page.dart';
 import 'package:ailytics/screens/home_screen.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   _HomePageState createState() => _HomePageState();

@@ -1,5 +1,4 @@
 import 'package:ailytics/screens/forgot_password_screen.dart';
-import 'package:ailytics/screens/home_screen.dart';
 import 'package:ailytics/screens/signup_screen.dart';
 import 'package:ailytics/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,7 @@ import 'package:ailytics/pages/home_page.dart';
 
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();

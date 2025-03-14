@@ -11,10 +11,16 @@ dependencies:
   flutter:
     sdk: flutter
 
+  google_sign_in: ^6.1.5
+  googleapis: ^11.4.0
+  googleapis_auth: ^1.4.1
+
+
   # Firebase dependencies (Updated to latest versions)
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.17.6
-  cloud_firestore: ^4.15.6
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.5.1 
+  cloud_firestore: ^5.6.5
+  http: ^1.0.0
 
   # State management
   provider: ^6.0.5
@@ -28,6 +34,7 @@ dependencies:
 
   # Default Flutter icons
   cupertino_icons: ^1.0.8
+  file_picker: ^9.1.0
 
 dev_dependencies:
   flutter_test:
@@ -37,6 +44,3 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Ensure the assets folder exists in your project
-  assets:
-    - assets/images/

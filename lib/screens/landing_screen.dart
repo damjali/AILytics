@@ -3,7 +3,7 @@ import 'package:ailytics/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 
 class LandingScreen extends StatelessWidget {
-  const LandingScreen({Key? key}) : super(key: key);
+  const LandingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +107,7 @@ class LandingScreen extends StatelessWidget {
   }
 
   Widget _buildButtonSection(bool isMobile, BuildContext context) {
-    return Container(
+    return SizedBox(
       height: isMobile ? 171 : null,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
