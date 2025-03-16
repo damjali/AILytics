@@ -13,7 +13,8 @@ class UploadPage extends StatefulWidget {
 
 class _UploadPageState extends State<UploadPage> {
   String? fileName;
-  String? fileUrl; // Stores uploaded file URL
+  String? fileUrl;
+  bool isFilePicked = false; // New variable to track if a file is selected
 
   Future<void> pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
@@ -21,6 +22,7 @@ class _UploadPageState extends State<UploadPage> {
     if (result != null) {
       setState(() {
         fileName = result.files.single.name;
+        isFilePicked = true; // Enable Analyze Report button immediately
       });
 
       // Upload file to GoFile.io
@@ -29,66 +31,35 @@ class _UploadPageState extends State<UploadPage> {
   }
 
   Future<void> uploadFile(File file) async {
-    try {
-      // Step 1: Get the best server from GoFile
-      var serverResponse = await http.get(Uri.parse('https://api.gofile.io/getServer'));
-      
-      if (serverResponse.statusCode != 200) {
-        throw Exception('Failed to fetch server: ${serverResponse.body}');
-      }
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('https://store1.gofile.io/uploadFile'),
+    );
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
-      var serverData = jsonDecode(serverResponse.body);
-      if (serverData['status'] != 'ok') {
-        throw Exception('Server error: ${serverData['status']}');
-      }
-
-      String server = serverData['data']['server'];
-
-      // Step 2: Upload file to the selected server
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('https://$server.gofile.io/uploadFile'),
-      );
-
-      request.files.add(await http.MultipartFile.fromPath('file', file.path));
-
-      var response = await request.send();
+    var response = await request.send();
+    if (response.statusCode == 200) {
       var responseData = await response.stream.bytesToString();
+      var jsonData = jsonDecode(responseData);
 
-      // Debugging: Print response
-      debugPrint("Upload response: $responseData");
+      setState(() {
+        fileUrl = jsonData['data']['downloadPage'];
+      });
 
-      if (response.statusCode == 200) {
-        var jsonData = jsonDecode(responseData);
-
-        if (jsonData['status'] == 'ok') {
-          setState(() {
-            fileUrl = jsonData['data']['downloadPage'];
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Upload successful! Link: $fileUrl")),
-          );
-        } else {
-          throw Exception('Upload failed! ${jsonData['status']}');
-        }
-      } else {
-        throw Exception('Upload failed! Status code: ${response.statusCode}');
-      }
-    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Upload error: $e")),
+        SnackBar(content: Text("Upload successful! Link: $fileUrl")),
       );
-      debugPrint("Upload error: $e");
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Upload failed!")),
+      );
     }
   }
 
   void analyzeReport() {
-    if (fileUrl != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Analyzing report: $fileUrl")),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Analyzing report: $fileName")),
+    );
   }
 
   @override
@@ -180,11 +151,11 @@ class _UploadPageState extends State<UploadPage> {
 
             const SizedBox(height: 20),
 
-            // Analyze Report Button
+            // Analyze Report Button (Enabled when a file is picked)
             ElevatedButton(
-              onPressed: fileUrl != null ? analyzeReport : null,
+              onPressed: isFilePicked ? analyzeReport : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: fileUrl != null ? Colors.black : Colors.grey,
+                backgroundColor: isFilePicked ? Colors.black : Colors.grey,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 50),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
