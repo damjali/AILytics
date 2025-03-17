@@ -26,11 +26,14 @@ class _UploadPageState extends State<UploadPage> {
     }
   }
 
+//Part lepas tekan analyze report, to interact with the file, we use the _selectedFile variable
   void analyzeReport() {
     if (_selectedFile != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Analyzing report: $fileName")),
       );
+      //contoh, to print file path, kita use this (will output inside terminal)
+      print(_selectedFile!.path);
     }
   }
 
