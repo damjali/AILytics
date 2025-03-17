@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:http/http.dart' as http;
 
 class UploadPage extends StatefulWidget {
   const UploadPage({super.key});
@@ -13,8 +11,8 @@ class UploadPage extends StatefulWidget {
 
 class _UploadPageState extends State<UploadPage> {
   String? fileName;
-  String? fileUrl;
-  bool isFilePicked = false; // New variable to track if a file is selected
+  File? _selectedFile;
+  bool isFilePicked = false; // Tracks if a file is selected
 
   Future<void> pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
@@ -22,44 +20,18 @@ class _UploadPageState extends State<UploadPage> {
     if (result != null) {
       setState(() {
         fileName = result.files.single.name;
+        _selectedFile = File(result.files.single.path!);
         isFilePicked = true; // Enable Analyze Report button immediately
       });
-
-      // Upload file to GoFile.io
-      await uploadFile(File(result.files.single.path!));
-    }
-  }
-
-  Future<void> uploadFile(File file) async {
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('https://store1.gofile.io/uploadFile'),
-    );
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
-
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      var responseData = await response.stream.bytesToString();
-      var jsonData = jsonDecode(responseData);
-
-      setState(() {
-        fileUrl = jsonData['data']['downloadPage'];
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Upload successful! Link: $fileUrl")),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Upload failed!")),
-      );
     }
   }
 
   void analyzeReport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Analyzing report: $fileName")),
-    );
+    if (_selectedFile != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Analyzing report: $fileName")),
+      );
+    }
   }
 
   @override
@@ -119,7 +91,7 @@ class _UploadPageState extends State<UploadPage> {
               ),
             ),
             const SizedBox(height: 20),
-
+            
             // File Name Preview
             if (fileName != null)
               Container(
@@ -136,22 +108,8 @@ class _UploadPageState extends State<UploadPage> {
                 ),
               ),
             const SizedBox(height: 20),
-
-            // Download Link
-            if (fileUrl != null)
-              GestureDetector(
-                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("File Link: $fileUrl")),
-                ),
-                child: Text(
-                  "Download File",
-                  style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
-                ),
-              ),
-
-            const SizedBox(height: 20),
-
-            // Analyze Report Button (Enabled when a file is picked)
+            
+            // Analyze Report Button
             ElevatedButton(
               onPressed: isFilePicked ? analyzeReport : null,
               style: ElevatedButton.styleFrom(
