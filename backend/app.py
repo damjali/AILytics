@@ -23,14 +23,14 @@ def process_file():
     try:
         df = pd.read_csv(file)  # Read CSV File
 
-        # ✅ Data Cleaning
+        # Data Cleaning
         total_rows = len(df)
         df = df.drop_duplicates()  # Remove Duplicates
         duplicate_rows_removed = total_rows - len(df)
         df = df.fillna("N/A")  # Handle Missing Values
         df.columns = df.columns.str.lower().str.replace(' ', '_')  # Standardize Column Names
 
-        # ✅ Convert Cleaned Data to JSON
+        #Convert Cleaned Data to JSON
         cleaned_data = df.to_dict(orient='records')
 
         return jsonify({

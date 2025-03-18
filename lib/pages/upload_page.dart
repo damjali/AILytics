@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:ailytics/pages/data_result_page.dart';
 
 class UploadPage extends StatefulWidget {
   const UploadPage({super.key});
@@ -13,7 +16,9 @@ class _UploadPageState extends State<UploadPage> {
   String? fileName;
   File? _selectedFile;
   bool isFilePicked = false; // Tracks if a file is selected
+  bool isLoading = false; // Tracks if the file is being processed
 
+  // Function to pick a file
   Future<void> pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
 
@@ -26,21 +31,80 @@ class _UploadPageState extends State<UploadPage> {
     }
   }
 
-//Part lepas tekan analyze report, to interact with the file, we use the _selectedFile variable
-  void analyzeReport() {
-    if (_selectedFile != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Analyzing report: $fileName")),
-      );
-      //contoh, to print file path, kita use this (will output inside terminal)
-      print(_selectedFile!.path);
+  // Function to send the file to the Flask backend
+  Future<Map<String, dynamic>> processFile(File file) async {
+    try {
+      // 🔥 Change this URL based on your environment
+      final Uri apiUrl = Uri.parse("http://10.0.2.2:5000/process-file"); // Android Emulator
+      // final Uri apiUrl = Uri.parse("http://localhost:5000/process-file"); // iOS Simulator / Web
+      // final Uri apiUrl = Uri.parse("http://<YOUR_PC_LOCAL_IP>:5000/process-file"); //Physical Device
+
+      // Create a multipart request
+      var request = http.MultipartRequest('POST', apiUrl);
+
+      // Add the file to the request
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        file.path,
+        filename: fileName,
+      ));
+
+      // Send the request and await response
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body); // Parse JSON response
+      } else {
+        throw Exception('Failed to process file: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error sending file: $e');
+      throw e;
+    }
+  }
+
+  // Function to analyze the report
+  void analyzeReport() async {
+    if (_selectedFile != null && fileName != null) {
+      setState(() {
+        isLoading = true; // Show loading indicator
+      });
+
+      try {
+        // Send the file to the backend and get the processed data
+        Map<String, dynamic> result = await processFile(_selectedFile!);
+
+        // Navigate to DataResultPage with the processed data and file name
+        Navigator.pushNamed(
+          context,
+          '/dataResult',
+          arguments: {
+            'processedData': result,
+            'fileName': fileName!,
+          },
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error processing file: $e")),
+        );
+      } finally {
+        setState(() {
+          isLoading = false; // Hide loading indicator
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Upload Data')),
+      appBar: AppBar(
+        title: const Text('Upload Data'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -94,7 +158,7 @@ class _UploadPageState extends State<UploadPage> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // File Name Preview
             if (fileName != null)
               Container(
@@ -111,17 +175,19 @@ class _UploadPageState extends State<UploadPage> {
                 ),
               ),
             const SizedBox(height: 20),
-            
+
             // Analyze Report Button
             ElevatedButton(
-              onPressed: isFilePicked ? analyzeReport : null,
+              onPressed: isFilePicked && !isLoading ? analyzeReport : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isFilePicked ? Colors.black : Colors.grey,
+                backgroundColor: isFilePicked && !isLoading ? Colors.black : Colors.grey,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 50),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
-              child: const Text("Analyze Report"),
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text("Analyze Report"),
             ),
           ],
         ),

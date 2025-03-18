@@ -1,5 +1,3 @@
-// lib/navigation/app_navigation.dart
-
 import 'package:flutter/material.dart';
 import 'package:ailytics/pages/home_page.dart';
 import 'package:ailytics/pages/upload_page.dart';
@@ -7,8 +5,9 @@ import 'package:ailytics/pages/dashboard_page.dart';
 import 'package:ailytics/pages/chatbot_page.dart';
 import 'package:ailytics/pages/prediction_page.dart';
 import 'package:ailytics/pages/recommendation_page.dart';
+import 'package:ailytics/pages/data_result_page.dart'; // Import DataResultPage
 
-// Create a global key to access navigation state
+// Global key to access navigation state
 final GlobalKey<AppNavigationState> navigationKey = GlobalKey<AppNavigationState>();
 
 class AppNavigation extends StatefulWidget {
@@ -39,9 +38,12 @@ class AppNavigationState extends State<AppNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Needed for more than 3 items
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: onItemTapped,
         selectedItemColor: Colors.black,
@@ -75,4 +77,24 @@ class AppNavigationState extends State<AppNavigation> {
       ),
     );
   }
+}
+
+// Named routes setup
+void main() {
+  runApp(MaterialApp(
+    title: 'AIltytics',
+    initialRoute: '/',
+    onGenerateRoute: (settings) {
+      if (settings.name == '/dataResult') {
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (context) => DataResultPage(
+            processedData: args['processedData'],
+            fileName: args['fileName'],
+          ),
+        );
+      }
+      return MaterialPageRoute(builder: (context) => const AppNavigation());
+    },
+  ));
 }
