@@ -1,18 +1,18 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # ✅ Allows requests from Flutter
+from flask_cors import CORS  # Allows requests from Flutter
 import pandas as pd
 
 app = Flask(__name__)
-CORS(app)  # ✅ Enable CORS for all routes
+CORS(app)  # Enable CORS for all routes
 
 @app.route('/')
 def home():
-    """✅ Root Route to Check If API is Running"""
+    """Root Route to Check If API is Running"""
     return jsonify({"message": "Flask API is running!"})
 
 @app.route('/process-file', methods=['POST'])
 def process_file():
-    """✅ Process Uploaded CSV File"""
+    """Process Uploaded CSV File"""
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
@@ -21,7 +21,7 @@ def process_file():
         return jsonify({'error': 'No selected file'}), 400
 
     try:
-        df = pd.read_csv(file)  # ✅ Read CSV File
+        df = pd.read_csv(file)  # Read CSV File
 
         # ✅ Data Cleaning
         total_rows = len(df)
