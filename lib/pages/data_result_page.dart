@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DataResultPage extends StatelessWidget {
-  final Map<String, dynamic> processedData; // Processed data from backend
-  final String fileName; // Name of the uploaded file
+  final Map<String, dynamic> processedData;
+  final String fileName;
 
   const DataResultPage({
     super.key,
@@ -12,8 +12,23 @@ class DataResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<Map<String, dynamic>> cleanedData =
+        List<Map<String, dynamic>>.from(processedData["cleaned_data"]);
+
+    List<String> columnNames = cleanedData.isNotEmpty
+        ? cleanedData.first.keys.toList()
+        : [];
+
+    List<Map<String, dynamic>> displayedData =
+        cleanedData.length > 20 ? cleanedData.sublist(0, 20) : cleanedData;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Data Cleaning Results')),
+      appBar: AppBar(
+        title: const Text('Data Cleaning Results'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -51,20 +66,78 @@ class DataResultPage extends StatelessWidget {
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 32),
+
             const Text(
-              'Cleaned Data Preview',
+              'Cleaned Data Table (First 20 Rows)',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
+
+            // Make sure table is inside Flexible
             Expanded(
-              child: ListView.builder(
-                itemCount: processedData["cleaned_data"].length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text("Row ${index + 1}"),
-                    subtitle: Text(processedData["cleaned_data"][index].toString()),
-                  );
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black54),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: DataTable(
+                        columnSpacing: 20,
+                        border: TableBorder.all(color: Colors.black54),
+                        columns: columnNames.map((column) {
+                          return DataColumn(
+                            label: Text(
+                              column,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          );
+                        }).toList(),
+                        rows: displayedData.map((rowData) {
+                          return DataRow(
+                            cells: columnNames.map((column) {
+                              return DataCell(
+                                Text(
+                                  rowData[column]?.toString() ?? 'N/A',
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Proceed to Dashboard Button
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Navigate back to the Dashboard screen
+                  Navigator.pushNamed(context, '/dashboard');
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Proceed to Dashboard',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
               ),
             ),
           ],
