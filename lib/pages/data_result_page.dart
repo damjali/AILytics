@@ -73,48 +73,61 @@ class DataResultPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Make sure table is inside Flexible
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black54),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        columnSpacing: 20,
-                        border: TableBorder.all(color: Colors.black54),
-                        columns: columnNames.map((column) {
-                          return DataColumn(
-                            label: Text(
-                              column,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          );
-                        }).toList(),
-                        rows: displayedData.map((rowData) {
-                          return DataRow(
-                            cells: columnNames.map((column) {
-                              return DataCell(
-                                Text(
-                                  rowData[column]?.toString() ?? 'N/A',
-                                  overflow: TextOverflow.ellipsis,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  double tableFontSize = constraints.maxWidth < 600
+                      ? 12
+                      : constraints.maxWidth < 1000
+                          ? 14
+                          : 16; // Adjust font size dynamically
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black54),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: DataTable(
+                            columnSpacing: 16,
+                            border: TableBorder.all(color: Colors.black54),
+                            columns: columnNames.map((column) {
+                              return DataColumn(
+                                label: Text(
+                                  column,
                                   textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: tableFontSize,
+                                  ),
                                 ),
                               );
                             }).toList(),
-                          );
-                        }).toList(),
+                            rows: displayedData.map((rowData) {
+                              return DataRow(
+                                cells: columnNames.map((column) {
+                                  return DataCell(
+                                    Text(
+                                      rowData[column]?.toString() ?? 'N/A',
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: tableFontSize),
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
 
@@ -124,7 +137,6 @@ class DataResultPage extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate back to the Dashboard screen
                   Navigator.pushNamed(context, '/dashboard');
                 },
                 style: ElevatedButton.styleFrom(

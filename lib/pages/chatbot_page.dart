@@ -1,7 +1,6 @@
 // lib/pages/chatbot_page.dart
 
 import 'package:flutter/material.dart';
-
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
 
