@@ -1,3 +1,4 @@
+import 'package:ailytics/pages/feature_selection_page';
 import 'package:flutter/material.dart';
 import 'package:ailytics/pages/home_page.dart';
 import 'package:ailytics/pages/upload_page.dart';
@@ -90,6 +91,15 @@ void main() {
         return MaterialPageRoute(
           builder: (context) => DataResultPage(
             processedData: args['processedData'],
+            fileName: args['fileName'],
+          ),
+        );
+      }
+      if (settings.name == '/featureSelection') {
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (context) => FeatureSelectionPage(
+            processedData: args['processedData'] ?? {'columns': []},
             fileName: args['fileName'],
           ),
         );

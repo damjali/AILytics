@@ -23,6 +23,46 @@ def get_file_hash(file):
     file.seek(0)  # Reset file pointer after reading
     return hasher.hexdigest()
 
+@app.route('/process-selections', methods=['POST'])
+def process_selections():
+    """Process Uploaded CSV File, extract features (column names), and return them for selection."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    try:
+        # Generate hash and extract original filename
+        file_hash = get_file_hash(file)
+        original_filename = os.path.splitext(file.filename)[0]
+        cache_filename = f"{original_filename}_{file_hash}_read.csv"
+        cache_path = os.path.join(CACHE_FOLDER, cache_filename)
+
+        # Check if the file exists in cache
+        if os.path.exists(cache_path):
+            df = pd.read_csv(cache_path)
+            cached = True
+        else:
+            df = pd.read_csv(file)
+            # Cache the file for later use
+            df.to_csv(cache_path, index=False)
+            cached = False
+
+        # Extract column names (features) from the dataset
+        columns = df.columns.tolist()
+
+        # Return the list of columns to the user along with cache info if desired
+        return jsonify({
+            'columns': columns,
+            'cached': cached
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/process-file', methods=['POST'])
 def process_file():
     """Process Uploaded CSV File and Use Cache"""
@@ -34,10 +74,13 @@ def process_file():
         return jsonify({'error': 'No selected file'}), 400
 
     try:
+        # Generate hash and extract original filename
         file_hash = get_file_hash(file)
-        cache_path = os.path.join(CACHE_FOLDER, f"{file_hash}.csv")
+        original_filename = os.path.splitext(file.filename)[0]
+        cleaned_filename = f"{original_filename}_cleaned.csv"
+        cache_path = os.path.join(CACHE_FOLDER, cleaned_filename)
 
-        # Check if cleaned file already exists
+        # Check if read file already exists
         if os.path.exists(cache_path):
             df = pd.read_csv(cache_path)  # Load from cache
             cached = True
@@ -56,6 +99,7 @@ def process_file():
 
         return jsonify({
             "message": "File successfully processed",
+            "cleaned_filename": cleaned_filename,
             "cleaned_data": cleaned_data,
             "cached": cached,
             "cleaning_summary": {
@@ -70,4 +114,4 @@ def process_file():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
