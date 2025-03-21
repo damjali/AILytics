@@ -1,4 +1,3 @@
-import 'package:ailytics/pages/feature_selection_page';
 import 'package:flutter/material.dart';
 import 'package:ailytics/pages/home_page.dart';
 import 'package:ailytics/pages/upload_page.dart';
@@ -7,6 +6,7 @@ import 'package:ailytics/pages/chatbot_page.dart';
 import 'package:ailytics/pages/prediction_page.dart';
 import 'package:ailytics/pages/recommendation_page.dart';
 import 'package:ailytics/pages/data_result_page.dart'; // Import DataResultPage
+import 'package:ailytics/pages/feature_selection_page.dart';
 
 // Global key to access navigation state
 final GlobalKey<AppNavigationState> navigationKey = GlobalKey<AppNavigationState>();
