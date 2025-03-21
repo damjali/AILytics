@@ -98,7 +98,7 @@ void main() {
       if (settings.name == '/featureSelection') {
         final args = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(
-          builder: (context) => FeatureSelectionPage(
+          builder:(context) => FeatureSelectionPage(
             processedData: args['processedData'] ?? {'columns': []},
             fileName: args['fileName'],
           ),

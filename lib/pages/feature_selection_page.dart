@@ -5,10 +5,10 @@ class FeatureSelectionPage extends StatefulWidget {
   final String fileName;
 
   const FeatureSelectionPage({
-    Key? key,
+    super.key,
     required this.processedData,
     required this.fileName,
-  }) : super(key: key);
+  });
 
   @override
   _FeatureSelectionPageState createState() => _FeatureSelectionPageState();
