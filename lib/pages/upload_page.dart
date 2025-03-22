@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:ailytics/pages/data_result_page.dart';
 
 class UploadPage extends StatefulWidget {
   const UploadPage({super.key});

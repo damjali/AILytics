@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:ailytics/pages/final_result_page.dart';
 import 'package:flutter/material.dart';
@@ -39,8 +38,9 @@ class _FeatureSelectionPageState extends State<FeatureSelectionPage> {
 
   /// Function to send the cached file along with the feature classifications
   /// to your backend endpoint "/process-final-result".
-  Future<Map<String, dynamic>> processFile() async {
+  Future<Map<String, dynamic>> processFile(String cacheFilename) async {
   try {
+
     // 🔥 Change this URL based on your environment
     // final Uri apiUrl = Uri.parse("http://10.0.2.2:5000/process-final-result"); // Android Emulator
     final Uri apiUrl = Uri.parse("http://localhost:5000/process-final-result"); // For Windows
@@ -53,7 +53,7 @@ class _FeatureSelectionPageState extends State<FeatureSelectionPage> {
 
     // Instead of sending the file, add the cache filename as a field.
     // Ensure that widget.processedData['cache_filename'] contains the correct filename.
-    request.fields['cache_filename'] = widget.processedData['cache_filename'] ?? '';
+    request.fields['cache_filename'] = cacheFilename;
 
     // Add the feature classifications as a field (encoded as JSON).
     request.fields['featureClassifications'] = jsonEncode(featureClassifications);
@@ -152,7 +152,7 @@ class _FeatureSelectionPageState extends State<FeatureSelectionPage> {
                   }
                   
                   // Call the processFile function to send the file and feature classifications to the backend.
-                  Map<String, dynamic> result = await processFile();
+                  Map<String, dynamic> result = await processFile(cacheFilename);
                   
                   // Navigate to FinalResultPage, passing the processed data from the backend.
                   Navigator.push(

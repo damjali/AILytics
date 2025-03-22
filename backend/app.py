@@ -1,7 +1,7 @@
 import os
 import hashlib
 import pandas as pd
-from flask import Flask, request, jsonify
+from flask import Flask, json, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -27,21 +27,24 @@ def get_file_hash(file):
 def process_final_result():
     """
     Calculate revenue, expenses, profit, and margin based on the selected features.
-    Expects a JSON payload with a 'classification_map' and 'cache_filename'.
+    Expects form fields:
+      - featureClassifications: a JSON string with the classification map.
+      - cache_filename: the filename of the cached CSV.
     """
     try:
-        data = request.get_json()
-        classification_map = data.get('classification_map', {})  # e.g. {"Sales": "revenue", "Returns": "expense"}
-        cache_filename = data.get('cache_filename')
+        # Retrieve data from form fields instead of JSON.
+        classification_map_json = request.form.get('featureClassifications', '{}')
+        classification_map = json.loads(classification_map_json)
+        cache_filename = request.form.get('cache_filename')
+        
         if not cache_filename:
             return jsonify({"error": "No cache filename provided"}), 400
-
-        # Construct the full path to the cached CSV file.
-        cache_path = os.path.join(CACHE_FOLDER, cache_filename)
-        if not os.path.exists(cache_path):
+        
+        # Check the cache filename refers to the cached file.
+        if not os.path.exists(cache_filename):
             return jsonify({"error": "Cached file not found"}), 404
-
-        df = pd.read_csv(cache_path)
+        
+        df = pd.read_csv(cache_filename)
 
         # Identify the revenue and expense columns based on the classification_map.
         revenue_cols = [col for col, classification in classification_map.items()
