@@ -3,9 +3,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ailytics/pages/feature_selection_page.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:ailytics/navigation/app_navigation.dart';
 import 'package:http/http.dart' as http;
 
 class DashboardPage extends StatefulWidget {
@@ -81,13 +81,14 @@ class _DashboardPageState extends State<DashboardPage> {
         Map<String, dynamic> result = await processFile(_selectedFile!);
 
         // Navigate to FeatureSelectionPage with the processed data and file name
-        Navigator.pushNamed(
+        Navigator.push(
           context,
-          '/featureSelection',
-          arguments: {
-            'processedData': result,
-            'fileName': fileName!,
-          },
+          MaterialPageRoute(
+            builder: (context) => FeatureSelectionPage(
+              processedData: result,
+              fileName: fileName!,
+            ),
+          ),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -100,6 +101,7 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
