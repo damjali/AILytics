@@ -1,11 +1,16 @@
 import 'package:ailytics/screens/splash_screen.dart';
 import 'package:ailytics/services/auth_service.dart';
-import 'package:ailytics/pages/upload_page.dart'; // Import UploadPage
-import 'package:ailytics/pages/data_result_page.dart'; // Import DataResultPage
+import 'package:ailytics/pages/upload_page.dart';
+import 'package:ailytics/pages/data_result_page.dart';
+import 'package:ailytics/navigation/app_navigation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ailytics/providers/data_provider.dart'; // Adjusted the path based on standard convention
 import 'firebase_options.dart';
+
+// Define a navigator key for routing
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,14 +28,17 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => DataProvider()), // Added DataProvider
       ],
       child: MaterialApp(
         title: 'AIltytics',
         debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey, // Fixed navigatorKey type
         theme: ThemeData(
           primarySwatch: Colors.blue,
           scaffoldBackgroundColor: Colors.white,
           fontFamily: 'Poppins',
+          visualDensity: VisualDensity.adaptivePlatformDensity, // Added from suggestion
           appBarTheme: const AppBarTheme(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -66,18 +74,27 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: const SplashScreen(),
-        routes: {
-          '/upload': (context) => const UploadPage(), // Route for UploadPage
-          '/dataResult': (context) {
-            // Extract arguments from ModalRoute
-            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-            return DataResultPage(
-              processedData: args['processedData'],
-              fileName: args['fileName'],
-            );
-          },
-        },
         onGenerateRoute: (settings) {
+          if (settings.name == '/') {
+            return MaterialPageRoute(
+              builder: (context) => AppNavigation(
+                initialArguments: settings.arguments as Map<String, dynamic>?,
+              ),
+            );
+          } else if (settings.name == '/dataResult') {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder: (context) => DataResultPage(
+                processedData: args['processedData'],
+                fileName: args['fileName'],
+              ),
+            );
+          } else if (settings.name == '/upload') {
+            // Add the upload page route
+            return MaterialPageRoute(
+              builder: (context) => const UploadPage(),
+            );
+          }
           // Handle other routes if needed
           return null;
         },

@@ -36,10 +36,10 @@ class _UploadPageState extends State<UploadPage> {
     try {
       // 🔥 Change this URL based on your environment
       //final Uri apiUrl = Uri.parse("http://10.0.2.2:5000/process-file"); // Android Emulator
-      final Uri apiUrl = Uri.parse("http://localhost:5000/process-file"); // For Windows
+      //final Uri apiUrl = Uri.parse("http://localhost:5000/process-file"); // For Windows
 
       // final Uri apiUrl = Uri.parse("http://localhost:5000/process-file"); // iOS Simulator / Web
-      // final Uri apiUrl = Uri.parse("http://<YOUR_PC_LOCAL_IP>:5000/process-file"); //Physical Device
+      final Uri apiUrl = Uri.parse("http://192.168.0.151:5000/process-file"); //Physical Device
 
       // Create a multipart request
       var request = http.MultipartRequest('POST', apiUrl);

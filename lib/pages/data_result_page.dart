@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:ailytics/navigation/app_navigation.dart';
+import 'package:provider/provider.dart';
+import 'package:ailytics/providers/data_provider.dart';
 
 class DataResultPage extends StatelessWidget {
   final Map<String, dynamic> processedData;
@@ -12,15 +15,21 @@ class DataResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Update the DataProvider with the processed data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<DataProvider>(context, listen: false)
+          .setData(processedData, fileName);
+    });
+
     List<Map<String, dynamic>> cleanedData =
-        List<Map<String, dynamic>>.from(processedData["cleaned_data"]);
+    List<Map<String, dynamic>>.from(processedData["cleaned_data"]);
 
     List<String> columnNames = cleanedData.isNotEmpty
         ? cleanedData.first.keys.toList()
         : [];
 
     List<Map<String, dynamic>> displayedData =
-        cleanedData.length > 20 ? cleanedData.sublist(0, 20) : cleanedData;
+    cleanedData.length > 20 ? cleanedData.sublist(0, 20) : cleanedData;
 
     return Scaffold(
       appBar: AppBar(
@@ -124,8 +133,17 @@ class DataResultPage extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate back to the Dashboard screen
-                  Navigator.pushNamed(context, '/dashboard');
+                  // Navigate to home and switch to dashboard tab
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/',
+                        (route) => false,
+                  );
+
+                  // Then tell the navigation to go to the dashboard tab
+                  Future.microtask(() {
+                    navigationKey.currentState?.onItemTapped(0);
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,

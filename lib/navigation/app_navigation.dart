@@ -5,13 +5,19 @@ import 'package:ailytics/pages/dashboard_page.dart';
 import 'package:ailytics/pages/chatbot_page.dart';
 import 'package:ailytics/pages/prediction_page.dart';
 import 'package:ailytics/pages/recommendation_page.dart';
-import 'package:ailytics/pages/data_result_page.dart'; // Import DataResultPage
+import 'package:provider/provider.dart';
+import 'package:ailytics/providers/data_provider.dart';
 
 // Global key to access navigation state
 final GlobalKey<AppNavigationState> navigationKey = GlobalKey<AppNavigationState>();
 
 class AppNavigation extends StatefulWidget {
-  const AppNavigation({super.key});
+  final Map<String, dynamic>? initialArguments;
+
+  const AppNavigation({
+    super.key,
+    this.initialArguments,
+  });
 
   @override
   State<AppNavigation> createState() => AppNavigationState();
@@ -19,6 +25,30 @@ class AppNavigation extends StatefulWidget {
 
 class AppNavigationState extends State<AppNavigation> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Check if we need to navigate to dashboard
+    if (widget.initialArguments != null) {
+      // Use Provider to update the data after the first frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          final dataProvider = Provider.of<DataProvider>(context, listen: false);
+          dataProvider.setData(
+            widget.initialArguments!['processedData'],
+            widget.initialArguments!['fileName'],
+          );
+        }
+      });
+
+      // If flag is set to navigate to dashboard, set selected index to dashboard (2)
+      if (widget.initialArguments!['navigateToDashboard'] == true) {
+        _selectedIndex = 2; // Index for dashboard
+      }
+    }
+  }
 
   final List<Widget> _pages = [
     const HomePage(),
@@ -77,24 +107,4 @@ class AppNavigationState extends State<AppNavigation> {
       ),
     );
   }
-}
-
-// Named routes setup
-void main() {
-  runApp(MaterialApp(
-    title: 'AIltytics',
-    initialRoute: '/',
-    onGenerateRoute: (settings) {
-      if (settings.name == '/dataResult') {
-        final args = settings.arguments as Map<String, dynamic>;
-        return MaterialPageRoute(
-          builder: (context) => DataResultPage(
-            processedData: args['processedData'],
-            fileName: args['fileName'],
-          ),
-        );
-      }
-      return MaterialPageRoute(builder: (context) => const AppNavigation());
-    },
-  ));
 }
