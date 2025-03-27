@@ -3,17 +3,17 @@ import hashlib
 import pandas as pd
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import google.generativeai as genai  # Import Gemini AI SDK
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
 CACHE_FOLDER = "cache"
-os.makedirs(CACHE_FOLDER, exist_ok=True)  # Create cache folder if it doesn't exist
+os.makedirs(CACHE_FOLDER, exist_ok=True)
 
-@app.route('/')
-def home():
-    """Root Route to Check If API is Running"""
-    return jsonify({"message": "Flask API is running!"})
+# Set up Gemini AI
+GENAI_API_KEY = "AIzaSyCBy3-xAk55GYzQJc58RUeR_ipAFK_hd2Q"
+genai.configure(api_key=GENAI_API_KEY)
 
 def get_file_hash(file):
     """Generate a unique hash for a file"""
@@ -22,6 +22,18 @@ def get_file_hash(file):
         hasher.update(chunk)
     file.seek(0)  # Reset file pointer after reading
     return hasher.hexdigest()
+
+def get_most_recent_file():
+    """Find the most recent cached CSV file"""
+    files = [os.path.join(CACHE_FOLDER, f) for f in os.listdir(CACHE_FOLDER) if f.endswith(".csv")]
+    if not files:
+        return None
+    return max(files, key=os.path.getctime)  # Get the most recently created file
+
+@app.route('/')
+def home():
+    """Root Route to Check If API is Running"""
+    return jsonify({"message": "Flask API is running!"})
 
 @app.route('/process-file', methods=['POST'])
 def process_file():
@@ -68,6 +80,46 @@ def process_file():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/analyze-file', methods=['GET'])
+def analyze_file():
+    """Retrieve the most recent cached file content without NaN errors"""
+    recent_file = get_most_recent_file()
+    if not recent_file:
+        return jsonify({"error": "No cached file found"}), 404
+
+    df = pd.read_csv(recent_file)
+
+    # Generate summary, replacing NaN with a placeholder
+    summary = df.describe(include="all").to_dict()
+    summary = {col: {stat: (val if pd.notna(val) else "N/A") for stat, val in stats.items()} for col, stats in summary.items()}
+
+    sample_data = df.fillna("N/A").head(5).to_dict(orient="records")  # Replace NaN in sample
+
+    return jsonify({
+        "message": "Recent file loaded",
+        "file_summary": summary,
+        "sample_data": sample_data
+    })
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    """Chatbot API using Gemini AI"""
+    data = request.json
+    user_message = data.get("message", "")
+    file_context = data.get("file_context", None)  # Context from recent file
+
+    if not user_message:
+        return jsonify({"error": "Message is required"}), 400
+
+    prompt = "You are an AI chatbot that helps users with business-related questions."
+    if file_context:
+        prompt += f" The user has uploaded a dataset with the following context: {file_context}. Respond based on this data when relevant."
+
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    response = model.generate_content(f"{prompt}\nUser: {user_message}\nAI:")
+
+    return jsonify({"response": response.text})
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

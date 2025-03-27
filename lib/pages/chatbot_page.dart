@@ -1,6 +1,7 @@
-// lib/pages/chatbot_page.dart
-
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -11,44 +12,88 @@ class ChatbotPage extends StatefulWidget {
 
 class _ChatbotPageState extends State<ChatbotPage> {
   final TextEditingController _controller = TextEditingController();
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      text: "Hello! I'm AILytics Assistant. How can I help you analyze your data today?",
-      isUser: false,
-    ),
-  ];
+  final List<ChatMessage> _messages = [];
+  String? _fileContext;
 
-  void _handleSubmitted(String text) {
-    _controller.clear();
+  Future<void> _analyzeRecentFile() async {
+    const url = "http://10.0.2.2:5000/analyze-file";
+    //const url = "http://localhost:5000/analyze-file"; // For Windows
+    //const url = "http://localhost:5000/analyze-file"; // iOS Simulator / Web
+    //const url = "http://192.168.0.151:5000/analyze-file"; //Physical Device
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _fileContext = jsonEncode(data["file_summary"]);
+        });
+        _addMessage("Recent file analyzed. You can now ask questions based on its data.", false);
+      } else {
+        _addMessage("No recent file found.", false);
+      }
+    } catch (e) {
+      _addMessage("Error analyzing file: $e", false);
+    }
+  }
 
+  Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
-    setState(() {
-      _messages.add(ChatMessage(
-        text: text,
-        isUser: true,
-      ));
-    });
+    _addMessage(text, true);
+    const url = "http://10.0.2.2:5000/chat";
+    //const url = "http://localhost:5000/chat"; // For Windows
+    //const url = "http://localhost:5000/chat"; // iOS Simulator / Web
+    //const url = "http://192.168.0.151:5000/chat"; //Physical Device
 
-    // Simulate AI response
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _messages.add(ChatMessage(
-            text: "I'm still in development. Please check back later for AI-powered analytics assistance!",
-            isUser: false,
-          ));
-        });
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"message": text, "file_context": _fileContext}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _addTypingMessage(data["response"]);
+      } else {
+        _addMessage("Error: ${response.body}", false);
       }
+    } catch (e) {
+      _addMessage("Failed to connect to chatbot API.", false);
+    }
+  }
+
+  void _addMessage(String text, bool isUser) {
+    setState(() {
+      _messages.add(ChatMessage(text: text, isUser: isUser));
     });
   }
+
+  void _addTypingMessage(String fullText) async {
+    String cleanedText = fullText.replaceAll("**", "");
+
+    List<String> words = cleanedText.split(" ");
+    String displayText = "";
+
+    for (int i = 0; i < words.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 100)); // Adjust speed here
+      setState(() {
+        displayText += (i == 0 ? "" : " ") + words[i];
+        if (_messages.isEmpty || _messages.last.isUser) {
+          _messages.add(ChatMessage(text: displayText, isUser: false));
+        } else {
+          _messages[_messages.length - 1] = ChatMessage(text: displayText, isUser: false);
+        }
+      });
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI Assistant'),
-      ),
+      appBar: AppBar(title: const Text('AI Assistant')),
       body: Column(
         children: [
           Expanded(
@@ -66,12 +111,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    // Add file attachment functionality
-                  },
-                ),
                 Expanded(
                   child: TextField(
                     controller: _controller,
@@ -79,12 +118,24 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       hintText: 'Ask me about your data...',
                       border: InputBorder.none,
                     ),
-                    onSubmitted: _handleSubmitted,
+                    onSubmitted: (text) {
+                      _controller.clear();
+                      _sendMessage(text);
+                    },
                   ),
                 ),
                 IconButton(
+                  icon: const Icon(Icons.file_present),
+                  onPressed: _analyzeRecentFile,
+                  tooltip: 'Analyze Recent File',
+                ),
+                IconButton(
                   icon: const Icon(Icons.send),
-                  onPressed: () => _handleSubmitted(_controller.text),
+                  onPressed: () {
+                    final text = _controller.text;
+                    _controller.clear();
+                    _sendMessage(text);
+                  },
                 ),
               ],
             ),
@@ -93,23 +144,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
       ),
     );
   }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 }
 
 class ChatMessage extends StatelessWidget {
   final String text;
   final bool isUser;
 
-  const ChatMessage({
-    super.key,
-    required this.text,
-    required this.isUser,
-  });
+  const ChatMessage({super.key, required this.text, required this.isUser});
 
   @override
   Widget build(BuildContext context) {
@@ -117,47 +158,34 @@ class ChatMessage extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isUser) ...[
+          if (!isUser)
             CircleAvatar(
-              backgroundColor: Colors.blue.shade100,
-              child: const Icon(
-                Icons.smart_toy,
-                color: Colors.black,
-              ),
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.smart_toy, color: Colors.white),
             ),
-            const SizedBox(width: 8),
-          ],
           Flexible(
             child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isUser ? Colors.black : Colors.grey[200],
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: isUser ? const Radius.circular(16) : Radius.zero,
-                  bottomRight: isUser ? Radius.zero : const Radius.circular(16),
-                ),
+                color: isUser ? Colors.blue : Colors.grey[300],
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 text,
-                style: TextStyle(
-                  color: isUser ? Colors.white : Colors.black,
-                ),
+                style: TextStyle(color: isUser ? Colors.white : Colors.black),
               ),
             ),
           ),
-          if (isUser) const SizedBox(width: 8),
           if (isUser)
-            const CircleAvatar(
-              child: Icon(
-                Icons.person,
-              ),
+            CircleAvatar(
+              backgroundColor: Colors.grey,
+              child: const Icon(Icons.person, color: Colors.white),
             ),
         ],
       ),
     );
   }
 }
+
