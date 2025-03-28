@@ -4,6 +4,8 @@ import pandas as pd
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import google.generativeai as genai  # Import Gemini AI SDK
+from langchain.memory import ConversationBufferMemory
+from langchain.memory.chat_message_histories import ChatMessageHistory
 
 app = Flask(__name__)
 CORS(app)
@@ -14,6 +16,10 @@ os.makedirs(CACHE_FOLDER, exist_ok=True)
 # Set up Gemini AI
 GENAI_API_KEY = "AIzaSyCBy3-xAk55GYzQJc58RUeR_ipAFK_hd2Q"
 genai.configure(api_key=GENAI_API_KEY)
+
+# Set up memory for chat history
+chat_memory = ChatMessageHistory()
+memory = ConversationBufferMemory(chat_memory=chat_memory, return_messages=True)
 
 def get_file_hash(file):
     """Generate a unique hash for a file"""
@@ -104,7 +110,7 @@ def analyze_file():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    """Chatbot API using Gemini AI"""
+    """Chatbot API using Gemini AI with Memory"""
     data = request.json
     user_message = data.get("message", "")
     file_context = data.get("file_context", None)  # Context from recent file
@@ -112,12 +118,22 @@ def chat():
     if not user_message:
         return jsonify({"error": "Message is required"}), 400
 
+    # Store conversation history
+    memory.chat_memory.add_user_message(user_message)
+
     prompt = "You are an AI chatbot that helps users with business-related questions."
     if file_context:
         prompt += f" The user has uploaded a dataset with the following context: {file_context}. Respond based on this data when relevant."
 
+    # Add conversation history to prompt
+    history = "\n".join([f"{msg.type}: {msg.content}" for msg in memory.chat_memory.messages])
+    final_prompt = f"{prompt}\nChat History:\n{history}\nUser: {user_message}\nAI:"
+
     model = genai.GenerativeModel("gemini-2.0-flash")
-    response = model.generate_content(f"{prompt}\nUser: {user_message}\nAI:")
+    response = model.generate_content(final_prompt)
+
+    # Store AI response in memory
+    memory.chat_memory.add_ai_message(response.text)
 
     return jsonify({"response": response.text})
 
