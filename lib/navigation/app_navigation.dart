@@ -4,7 +4,9 @@ import 'package:ailytics/pages/upload_page.dart';
 import 'package:ailytics/pages/dashboard_page.dart';
 import 'package:ailytics/pages/chatbot_page.dart';
 import 'package:ailytics/pages/prediction_page.dart';
-import 'package:ailytics/pages/recommendation_page.dart';
+import 'package:ailytics/pages/revenue_recommendation_page.dart';
+import 'package:ailytics/pages/sales_recommendation_page.dart';
+import 'package:ailytics/pages/expense_recommendation_page.dart';
 import 'package:provider/provider.dart';
 import 'package:ailytics/providers/data_provider.dart';
 
@@ -56,7 +58,6 @@ class AppNavigationState extends State<AppNavigation> {
     const DashboardPage(),
     const ChatbotPage(),
     const PredictionPage(),
-    const RecommendationPage(),
   ];
 
   void onItemTapped(int index) {
@@ -98,10 +99,6 @@ class AppNavigationState extends State<AppNavigation> {
           BottomNavigationBarItem(
             icon: Icon(Icons.trending_up),
             label: 'Predict',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.lightbulb),
-            label: 'Recommend',
           ),
         ],
       ),

@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 class DataProvider extends ChangeNotifier {
   Map<String, dynamic>? _processedData;
   String? _fileName;
+  String dataType = 'business';
+  String timeRange = '';
+  String dataDescription = '';
 
   Map<String, dynamic>? get processedData => _processedData;
   String? get fileName => _fileName;

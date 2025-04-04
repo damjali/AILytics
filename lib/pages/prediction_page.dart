@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ailytics/navigation/app_navigation.dart';
-import 'package:ailytics/pages/recommendation_page.dart';
+import 'package:ailytics/pages/revenue_recommendation_page.dart';
+import 'package:ailytics/pages/sales_recommendation_page.dart';
+import 'package:ailytics/pages/expense_recommendation_page.dart';
 
 class PredictionPage extends StatelessWidget {
   const PredictionPage({super.key});
@@ -38,6 +40,8 @@ class PredictionPage extends StatelessWidget {
                 title: 'Sales Forecast',
                 shortRecommendation: 'Focus on Q2 sales strategies for highest growth potential.',
                 predictionType: 'sales',
+                apiEndpoint: 'http://192.168.0.135:5000/get-sales-recommendations',
+                recommendationPage: SalesRecommendationPage.new,
               ),
               const SizedBox(height: 16),
               _buildPredictionCard(
@@ -45,6 +49,8 @@ class PredictionPage extends StatelessWidget {
                 title: 'Revenue Forecast',
                 shortRecommendation: 'Diversify revenue streams with focus on product line B.',
                 predictionType: 'revenue',
+                apiEndpoint: 'http://192.168.0.135:5000/get-revenue-recommendations',
+                recommendationPage: RevenueRecommendationPage.new,
               ),
               const SizedBox(height: 16),
               _buildPredictionCard(
@@ -52,6 +58,8 @@ class PredictionPage extends StatelessWidget {
                 title: 'Expense Forecast',
                 shortRecommendation: 'Optimize manufacturing costs for 12-15% annual savings.',
                 predictionType: 'expense',
+                apiEndpoint: 'http://192.168.0.135:5000/get-expense-recommendations',
+                recommendationPage: ExpenseRecommendationPage.new,
               ),
             ],
           ),
@@ -65,6 +73,8 @@ class PredictionPage extends StatelessWidget {
     required String title,
     required String shortRecommendation,
     required String predictionType,
+    required String apiEndpoint,
+    required Widget Function({Key? key, required String predictionType, required String title, required String apiEndpoint}) recommendationPage,
   }) {
     return Card(
       shape: RoundedRectangleBorder(
@@ -124,13 +134,14 @@ class PredictionPage extends StatelessWidget {
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    // Navigate to recommendation page with parameters
+                    // Navigate to respective recommendation page with parameters
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => RecommendationPage(
+                        builder: (context) => recommendationPage(
                           predictionType: predictionType,
                           title: title,
+                          apiEndpoint: apiEndpoint,
                         ),
                       ),
                     );
