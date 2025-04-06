@@ -40,8 +40,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
     if (text.trim().isEmpty) return;
 
     _addMessage(text, true);
-    const url = "http://10.0.2.2:5000/chat";
-    //const url = "http://localhost:5000/chat"; // For Windows
+    // const url = "http://10.0.2.2:5000/chat";
+    const url = "http://localhost:5000/chat"; // For Windows
     //const url = "http://localhost:5000/chat"; // iOS Simulator / Web
     //const url = "http://192.168.0.151:5000/chat"; //Physical Device
 

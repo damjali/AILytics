@@ -85,6 +85,7 @@ def process_file():
 
         return jsonify({
             "message": "File successfully processed",
+            "file_name": cleaned_filename,
             "cleaned_data": cleaned_data,
             "cached": cached,
             "cleaning_summary": {

@@ -5,8 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:ailytics/providers/data_provider.dart';
 import 'package:intl/intl.dart';
 
-import '../main.dart';
-
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
     super.key,
