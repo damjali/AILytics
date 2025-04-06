@@ -6,6 +6,7 @@ import 'package:ailytics/pages/chatbot_page.dart';
 import 'package:ailytics/pages/prediction_page.dart';
 import 'package:ailytics/pages/recommendation_page.dart';
 import 'package:ailytics/pages/data_result_page.dart'; // Import DataResultPage
+import 'package:ailytics/pages/feature_selection_page.dart';
 
 // Global key to access navigation state
 final GlobalKey<AppNavigationState> navigationKey = GlobalKey<AppNavigationState>();
@@ -90,6 +91,15 @@ void main() {
         return MaterialPageRoute(
           builder: (context) => DataResultPage(
             processedData: args['processedData'],
+            fileName: args['fileName'],
+          ),
+        );
+      }
+      if (settings.name == '/featureSelection') {
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder:(context) => FeatureSelectionPage(
+            processedData: args['processedData'] ?? {'columns': []},
             fileName: args['fileName'],
           ),
         );

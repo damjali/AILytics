@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:ailytics/pages/data_result_page.dart';
 
 class UploadPage extends StatefulWidget {
   const UploadPage({super.key});
@@ -35,7 +34,7 @@ class _UploadPageState extends State<UploadPage> {
   Future<Map<String, dynamic>> processFile(File file) async {
     try {
       // 🔥 Change this URL based on your environment
-      //final Uri apiUrl = Uri.parse("http://10.0.2.2:5000/process-file"); // Android Emulator
+      // final Uri apiUrl = Uri.parse("http://10.0.2.2:5000/process-file"); // Android Emulator
       final Uri apiUrl = Uri.parse("http://localhost:5000/process-file"); // For Windows
 
       // final Uri apiUrl = Uri.parse("http://localhost:5000/process-file"); // iOS Simulator / Web
