@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:ailytics/navigation/app_navigation.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ailytics/providers/data_provider.dart';
 
-import '../main.dart';
-
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({
-    super.key,
-  });
+  const DashboardPage({super.key});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  // State variables to store financial stats
+  double revenue = 0.0;
+  double expenses = 0.0;
+  double profit = 0.0;
+  double margin = 0.0;
+
+  // Flag to indicate whether we've initialized the values from processedData
+  bool _initialValuesSet = false;
+
   @override
   Widget build(BuildContext context) {
     // Get data from provider
@@ -23,6 +29,58 @@ class _DashboardPageState extends State<DashboardPage> {
     final processedData = dataProvider.processedData;
     final fileName = dataProvider.fileName;
     final hasData = dataProvider.hasData;
+
+    // If data is available and we haven't yet initialized our state,
+    // compute the initial financial stats.
+    if (hasData && processedData != null && !_initialValuesSet) {
+      final cleanedData = processedData['cleaned_data'] as List<dynamic>;
+      if (cleanedData.isNotEmpty) {
+        final firstRow = cleanedData.first as Map<String, dynamic>;
+
+        // Initialize revenue by looking for a revenue/income/sales column.
+        for (var key in firstRow.keys) {
+          String keyLower = key.toLowerCase();
+          if (keyLower.contains('revenue') ||
+              keyLower.contains('income') ||
+              keyLower.contains('sales')) {
+            revenue = _calculateAverage(cleanedData, key);
+            break;
+          }
+        }
+
+        // Initialize expenses by looking for an expense/cost column.
+        for (var key in firstRow.keys) {
+          String keyLower = key.toLowerCase();
+          if (keyLower.contains('expense') ||
+              keyLower.contains('cost')) {
+            expenses = _calculateAverage(cleanedData, key);
+            break;
+          }
+        }
+
+        // Fallback: use the first two numeric columns if not found.
+        if (revenue == 0.0 && expenses == 0.0) {
+          List<String> numericColumns = [];
+          for (var key in firstRow.keys) {
+            if (firstRow[key] is num) {
+              numericColumns.add(key);
+              if (numericColumns.length >= 2) break;
+            }
+          }
+          if (numericColumns.isNotEmpty) {
+            revenue = _calculateAverage(cleanedData, numericColumns[0]);
+          }
+          if (numericColumns.length >= 2) {
+            expenses = _calculateAverage(cleanedData, numericColumns[1]);
+          }
+        }
+
+        // Calculate profit and margin.
+        profit = revenue - expenses;
+        margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+      }
+      _initialValuesSet = true;
+    }
 
     print("Dashboard build: has data = $hasData");
     if (hasData) {
@@ -37,7 +95,7 @@ class _DashboardPageState extends State<DashboardPage> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() {
-                // Refresh data if needed
+                // Optionally refresh data.
               });
             },
           ),
@@ -68,7 +126,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              _buildSummaryCards(hasData, processedData),
+              _buildSummaryCards(),
               const SizedBox(height: 24),
               const Text(
                 'Performance Charts',
@@ -87,83 +145,56 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildSummaryCards(bool hasData, Map<String, dynamic>? processedData) {
-    // If we have processed data, extract financial metrics
-    double revenue = 0.0;
-    double expenses = 0.0;
-    double profit = 0.0;
-    double margin = 0.0;
-
-    if (hasData && processedData != null) {
-      // We need to extract data from the cleaned_data directly since summary_stats is not provided
-      final cleanedData = processedData['cleaned_data'] as List<dynamic>;
-
-      if (cleanedData.isNotEmpty) {
-        // Try to find financial columns in the data
-        final firstRow = cleanedData.first as Map<String, dynamic>;
-
-        // Look for revenue/income column
-        for (var key in firstRow.keys) {
-          String keyLower = key.toLowerCase();
-          if (keyLower.contains('revenue') || keyLower.contains('income') || keyLower.contains('sales')) {
-            revenue = _calculateAverage(cleanedData, key);
-            break;
-          }
-        }
-
-        // Look for expenses/cost column
-        for (var key in firstRow.keys) {
-          String keyLower = key.toLowerCase();
-          if (keyLower.contains('expense') || keyLower.contains('cost')) {
-            expenses = _calculateAverage(cleanedData, key);
-            break;
-          }
-        }
-
-        // If we couldn't find the columns, try to use the first two numeric columns as a fallback
-        if (revenue == 0.0 && expenses == 0.0) {
-          List<String> numericColumns = [];
-          for (var key in firstRow.keys) {
-            if (firstRow[key] is num) {
-              numericColumns.add(key);
-              if (numericColumns.length >= 2) break;
-            }
-          }
-
-          if (numericColumns.length >= 1) {
-            revenue = _calculateAverage(cleanedData, numericColumns[0]);
-          }
-
-          if (numericColumns.length >= 2) {
-            expenses = _calculateAverage(cleanedData, numericColumns[1]);
-          }
-        }
-
-        // Calculate profit and margin
-        profit = revenue - expenses;
-        margin = revenue > 0 ? (profit / revenue) * 100 : 0;
-      }
-    }
+  Widget _buildSummaryCards() {
+    // Format numbers with thousand separators and two decimals.
+    String revenueFormatted = NumberFormat("#,##0.00", "en_US").format(revenue);
+    String expensesFormatted = NumberFormat("#,##0.00", "en_US").format(expenses);
+    String profitFormatted = NumberFormat("#,##0.00", "en_US").format(profit);
+    String marginFormatted = NumberFormat("#,##0.00", "en_US").format(margin);
 
     return Column(
       children: [
         Row(
           children: [
             Expanded(
-              child: _buildSummaryCard(
-                'Revenue',
-                '\$0.00', //can edit here for the predicted value later
-                Icons.attach_money,
-                Colors.green,
+              // Revenue card is tappable to edit revenue.
+              child: InkWell(
+                onTap: () {
+                  _showEditDialog('Revenue', revenue, (newValue) {
+                    setState(() {
+                      revenue = newValue;
+                      profit = revenue - expenses;
+                      margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+                    });
+                  });
+                },
+                child: _buildSummaryCard(
+                  'Revenue',
+                  '\$$revenueFormatted',
+                  Icons.attach_money,
+                  revenue < 0 ? Colors.red : Colors.green,
+                ),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _buildSummaryCard(
-                'Expenses',
-                '\$0.00', //can edit here for the predicted value later
-                Icons.money_off,
-                Colors.red,
+              // Expenses card is tappable to edit expenses.
+              child: InkWell(
+                onTap: () {
+                  _showEditDialog('Expenses', expenses, (newValue) {
+                    setState(() {
+                      expenses = newValue;
+                      profit = revenue - expenses;
+                      margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+                    });
+                  });
+                },
+                child: _buildSummaryCard(
+                  'Expenses',
+                  '\$$expensesFormatted',
+                  Icons.money_off,
+                  expenses < 0 ? Colors.red : Colors.red, // Expenses typically remain red if high.
+                ),
               ),
             ),
           ],
@@ -174,23 +205,105 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: _buildSummaryCard(
                 'Profit',
-                '\$0.00', //can edit here for the predicted value later
+                '\$$profitFormatted',
                 Icons.trending_up,
-                Colors.blue,
+                profit < 0 ? Colors.red : Colors.blue,
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: _buildSummaryCard(
                 'Margin',
-                '0.00%', //can edit here for the predicted value later
+                '$marginFormatted%',
                 Icons.pie_chart,
-                Colors.purple,
+                margin < 0 ? Colors.red : Colors.purple,
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  Future<void> _showEditDialog(
+      String label, double currentValue, Function(double) onUpdate) async {
+    TextEditingController controller =
+        TextEditingController(text: currentValue.toString());
+    double? newValue = await showDialog<double>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Edit $label"),
+          content: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(hintText: "Enter new $label value"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                double? parsed = double.tryParse(controller.text);
+                Navigator.pop(context, parsed);
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+    if (newValue != null) {
+      onUpdate(newValue);
+    }
+  }
+
+  Widget _buildSummaryCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -200,19 +313,17 @@ class _DashboardPageState extends State<DashboardPage> {
 
     for (var item in data) {
       if (item is Map<String, dynamic>) {
-        // Make sure we handle both numeric values and string representations of numbers
         if (item.containsKey(columnName)) {
           var value = item[columnName];
           if (value is num) {
             sum += value.toDouble();
             count++;
           } else if (value is String) {
-            // Try to parse the string as a number
             try {
               sum += double.parse(value);
               count++;
             } catch (_) {
-              // Not a number, ignore
+              // Ignore non-numeric strings
             }
           }
         }
@@ -891,7 +1002,6 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
-              // Switch to the Upload tab (index 1) using the navigation key
               navigationKey.currentState?.onItemTapped(1);
             },
             icon: const Icon(Icons.upload_file),
@@ -902,50 +1012,4 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildSummaryCard(
-      String title,
-      String value,
-      IconData icon,
-      Color color,
-      ) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
