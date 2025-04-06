@@ -3,6 +3,7 @@ import 'package:ailytics/navigation/app_navigation.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:ailytics/providers/data_provider.dart';
+import 'package:intl/intl.dart';
 
 import '../main.dart';
 
@@ -132,10 +133,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
           if (numericColumns.length >= 1) {
             revenue = _calculateAverage(cleanedData, numericColumns[0]);
+            print("revenue: $revenue");
           }
 
           if (numericColumns.length >= 2) {
             expenses = _calculateAverage(cleanedData, numericColumns[1]);
+            print("expenses: $expenses");
           }
         }
 
@@ -145,6 +148,11 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     }
 
+    String revenueFormatted = NumberFormat("#,##0.00", "en_US").format(revenue);
+    String expensesFormatted = NumberFormat("#,##0.00", "en_US").format(expenses);
+    String profitFormatted = NumberFormat("#,##0.00", "en_US").format(profit);
+    String marginFormatted = NumberFormat("#,##0.00", "en_US").format(margin);
+
     return Column(
       children: [
         Row(
@@ -152,7 +160,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: _buildSummaryCard(
                 'Revenue',
-                '\$0.00', //can edit here for the predicted value later
+                '\$$revenueFormatted', //can edit here for the predicted value later
                 Icons.attach_money,
                 Colors.green,
               ),
@@ -161,7 +169,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: _buildSummaryCard(
                 'Expenses',
-                '\$0.00', //can edit here for the predicted value later
+                '\$$expensesFormatted', //can edit here for the predicted value later
                 Icons.money_off,
                 Colors.red,
               ),
@@ -174,7 +182,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: _buildSummaryCard(
                 'Profit',
-                '\$0.00', //can edit here for the predicted value later
+                '\$$profitFormatted', //can edit here for the predicted value later
                 Icons.trending_up,
                 Colors.blue,
               ),
@@ -183,7 +191,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: _buildSummaryCard(
                 'Margin',
-                '0.00%', //can edit here for the predicted value later
+                '$marginFormatted%', //can edit here for the predicted value later
                 Icons.pie_chart,
                 Colors.purple,
               ),
