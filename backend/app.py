@@ -17,6 +17,8 @@ os.makedirs(CACHE_FOLDER, exist_ok=True)
 GENAI_API_KEY = "AIzaSyCBy3-xAk55GYzQJc58RUeR_ipAFK_hd2Q"
 genai.configure(api_key=GENAI_API_KEY)
 
+hardcodedFile = "backend\cache\Bakery_cleaned.csv"
+
 # Set up memory for chat history
 chat_memory = ChatMessageHistory()
 memory = ConversationBufferMemory(chat_memory=chat_memory, return_messages=True)
