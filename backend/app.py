@@ -3,6 +3,7 @@ import hashlib
 import pandas as pd
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 import google.generativeai as genai  # Import Gemini AI SDK
 from langchain.memory import ConversationBufferMemory
 from langchain.memory.chat_message_histories import ChatMessageHistory
@@ -22,6 +23,15 @@ hardcodedFile = "backend\cache\Bakery_cleaned.csv"
 # Set up memory for chat history
 chat_memory = ChatMessageHistory()
 memory = ConversationBufferMemory(chat_memory=chat_memory, return_messages=True)
+
+def get_cleaned_filename(filename):
+    """
+    Generate a cleaned filename using the actual uploaded file name.
+    It returns the filename with a '_cleaned' suffix before the extension.
+    """
+    safe_filename = secure_filename(filename)
+    name, ext = os.path.splitext(safe_filename)
+    return f"{name}_cleaned{ext}"
 
 def get_file_hash(file):
     """Generate a unique hash for a file"""
@@ -54,8 +64,9 @@ def process_file():
         return jsonify({'error': 'No selected file'}), 400
 
     try:
-        file_hash = get_file_hash(file)
-        cache_path = os.path.join(CACHE_FOLDER, f"{file_hash}.csv")
+        # Use the actual filename with '_cleaned' appended
+        cleaned_filename = get_cleaned_filename(file.filename)
+        cache_path = os.path.join(CACHE_FOLDER, cleaned_filename)
 
         # Check if cleaned file already exists
         if os.path.exists(cache_path):
@@ -76,6 +87,7 @@ def process_file():
 
         return jsonify({
             "message": "File successfully processed",
+            "file_name": cleaned_filename,
             "cleaned_data": cleaned_data,
             "cached": cached,
             "cleaning_summary": {
