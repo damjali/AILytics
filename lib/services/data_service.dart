@@ -7,7 +7,8 @@ class DataService {
   // Backend server URL - replace with your actual server URL
   // For local development with Flask, typically http://10.0.2.2:5000 for Android emulator
   // or http://localhost:5000 for web
-  static const String baseUrl = 'http://10.0.2.2:5000';
+  // static const String baseUrl = 'http://10.0.2.2:5000';
+  static const String baseUrl = 'http://localhost:5000';
 
   // Process the uploaded file
   static Future<Map<String, dynamic>> processData(File file) async {

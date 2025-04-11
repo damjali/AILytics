@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:ailytics/screens/landing_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:ailytics/pages/data_result_page.dart';
 
 class UploadPage extends StatefulWidget {
   const UploadPage({super.key});
@@ -50,12 +52,16 @@ class _UploadPageState extends State<UploadPage> {
         filename: fileName,
       ));
 
-      // Send the request and await response
+       // Send the request and await response
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body); // Parse JSON response
+        Map<String, dynamic> processedData = jsonDecode(response.body);
+        fileName = processedData['file_name'];
+        // Save the processed data in Firestore
+        await saveProcessedData(processedData);
+        return processedData;
       } else {
         throw Exception('Failed to process file: ${response.statusCode}');
       }
@@ -63,6 +69,116 @@ class _UploadPageState extends State<UploadPage> {
       print('Error sending file: $e');
       throw e;
     }
+  }
+
+  Future<void> saveProcessedData(Map<String, dynamic> processedData) async {
+    final String? uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      Navigator.push(context,
+                    MaterialPageRoute(builder: (_) =>
+                    const LandingScreen()));
+    }
+    
+    double revenue = 0.0;
+    double expenses = 0.0;
+    double profit = 0.0;
+    double margin = 0.0;
+
+    final cleanedData = processedData['cleaned_data'] as List<dynamic>;
+    if (cleanedData.isNotEmpty) {
+        // Try to find financial columns in the data
+        final firstRow = cleanedData.first as Map<String, dynamic>;
+
+        // Look for revenue/income column
+        for (var key in firstRow.keys) {
+          String keyLower = key.toLowerCase();
+          if (keyLower.contains('revenue') || keyLower.contains('income') || keyLower.contains('sales')) {
+            revenue = _calculateAverage(cleanedData, key);
+            break;
+          }
+        }
+
+        // Look for expenses/cost column
+        for (var key in firstRow.keys) {
+          String keyLower = key.toLowerCase();
+          if (keyLower.contains('expense') || keyLower.contains('cost')) {
+            expenses = _calculateAverage(cleanedData, key);
+            break;
+          }
+        }
+
+        // If we couldn't find the columns, try to use the first two numeric columns as a fallback
+        if (revenue == 0.0 && expenses == 0.0) {
+          List<String> numericColumns = [];
+          for (var key in firstRow.keys) {
+            if (firstRow[key] is num) {
+              numericColumns.add(key);
+              if (numericColumns.length >= 2) break;
+            }
+          }
+
+          if (numericColumns.length >= 1) {
+            revenue = _calculateAverage(cleanedData, numericColumns[0]);
+            print("revenue: $revenue");
+          }
+
+          if (numericColumns.length >= 2) {
+            expenses = _calculateAverage(cleanedData, numericColumns[1]);
+            print("expenses: $expenses");
+          }
+        }
+
+        // Calculate profit and margin
+        profit = revenue - expenses;
+        margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+      }
+
+    Map<String, dynamic> finalData = {
+      'filename': fileName,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'revenue': revenue,
+      'expenses': expenses,
+      'profit': profit,
+      'margin': margin, // Typically represented as a decimal (e.g., 0.6667 for 66.67%)
+    };
+
+    final docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('processedFiles')
+        .doc(fileName);
+
+    await docRef.set(finalData);
+
+    print("finalData has been saved as : $fileName for user: $uid");
+  }
+
+  double _calculateAverage(List<dynamic> data, String columnName) {
+    double sum = 0;
+    int count = 0;
+
+    for (var item in data) {
+      if (item is Map<String, dynamic>) {
+        // Make sure we handle both numeric values and string representations of numbers
+        if (item.containsKey(columnName)) {
+          var value = item[columnName];
+          if (value is num) {
+            sum += value.toDouble();
+            count++;
+          } else if (value is String) {
+            // Try to parse the string as a number
+            try {
+              sum += double.parse(value);
+              count++;
+            } catch (_) {
+              // Not a number, ignore
+            }
+          }
+        }
+      }
+    }
+
+    return count > 0 ? sum / count : 0;
   }
 
   // Function to analyze the report
