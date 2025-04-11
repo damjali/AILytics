@@ -42,7 +42,8 @@ class _DashboardPageState extends State<DashboardPage> {
           String keyLower = key.toLowerCase();
           if (keyLower.contains('revenue') ||
               keyLower.contains('income') ||
-              keyLower.contains('sales')) {
+              keyLower.contains('sales') || 
+              keyLower.contains('selling')) {
             revenue = _calculateAverage(cleanedData, key);
             break;
           }
@@ -320,7 +321,7 @@ class _DashboardPageState extends State<DashboardPage> {
             count++;
           } else if (value is String) {
             try {
-              sum += double.parse(value);
+              sum += double.parse(value.trim());
               count++;
             } catch (_) {
               // Ignore non-numeric strings
@@ -329,8 +330,9 @@ class _DashboardPageState extends State<DashboardPage> {
         }
       }
     }
-
-    return count > 0 ? sum / count : 0;
+    
+    double finalValue = count > 0 ? sum : 0;
+    return finalValue;
   }
 
   // Modified chart builder to work with scrolling
