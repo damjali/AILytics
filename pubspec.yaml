@@ -10,13 +10,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  csv: ^5.0.2
+  path_provider: ^2.1.1
   google_sign_in: ^6.1.5
   googleapis: ^11.4.0
   googleapis_auth: ^1.4.1
   flutter_gemini: ^3.0.0
   dash_chat_2: ^0.0.20
-
 
   # Firebase dependencies (Updated to latest versions)
   firebase_core: ^3.12.1
@@ -42,6 +42,7 @@ dependencies:
 
   # Charts
   fl_chart: ^0.65.0
+
   # Date formatting
   intl: ^0.18.1
   flutter_chat_ui: ^1.6.15
@@ -54,4 +55,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
+  assets:
+    - assets/forecast_april_2025.csv
